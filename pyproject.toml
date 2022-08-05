@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "Auto-Fish"
+version = "0.1.0"
+description = ""
+authors = ["Kougami"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+aircv = "^1.4.6"
+numpy = "^1.21.6"
+opencv_python = "^4.6.0.66"
+PyAutoGUI = "^0.9.53"
+PyQt5 = "^5.15.7"
+pywin32 = "^304"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

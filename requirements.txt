@@ -1,0 +1,6 @@
+aircv==1.4.6
+numpy==1.21.6
+opencv_python==4.6.0.66
+PyAutoGUI==0.9.53
+PyQt5==5.15.7
+pywin32==304
