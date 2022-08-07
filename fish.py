@@ -1,3 +1,4 @@
+from turtle import position
 from PyQt5.QtWidgets import QApplication
 import win32gui, time
 import pyautogui as pag
@@ -5,6 +6,7 @@ from ctypes import CDLL
 from numpy import array,uint8,ndarray
 import cv2
 import aircv as ac
+from time import strftime, localtime, time, sleep
 
 
 class Mouse:
@@ -19,7 +21,7 @@ class Mouse:
         self.ghub.moveR(x, y)
     def click(self):
         self.ghub.press(1)
-        time.sleep(0.1)
+        sleep(0.1)
         self.ghub.release(1)
 
 class Screen:
@@ -53,56 +55,66 @@ class Screen:
         template = cv2.imread(templateSrc)
         match_result = ac.find_template(self.img, template)
         # print(templateSrc, match_result)
-        return match_result if match_result == None or match_result['confidence'] > 0.9 else None
-    def click(self, x, y):
+        if match_result == None or match_result['confidence'] < 0.9:
+            self.position = None
+            return False
+        else: 
+            self.position = int(match_result['result'][0]), int(match_result['result'][1])
+            return True
+    def click(self, x=-1, y=-1):
+        if x == -1 or y == -1:
+            x = self.position[0]
+            y = self.position[1]
         rect = self.getRect()
         x += rect[0]
         y += rect[1] + 26
         self.mouse.move(x, y)
         self.mouse.click()
-        time.sleep(0.1)
-        self.mouse.move(rect[0], rect[1])
+        print(f'{strftime("%H:%M:%S", localtime())} 点击坐标: ({x}, {y})')
         
 
 
 if __name__ =='__main__':
 
-    print('3 秒后开始执行, 请切换到游戏窗口')
-    time.sleep(3)
-    print("开始操作")
+    print(f'{strftime("%H:%M:%S", localtime())} [5] 秒后开始执行, 请切换到游戏窗口')
+    sleep(5)
+    print(f'{strftime("%H:%M:%S", localtime())} 开始操作')
 
     screen = Screen(win_title='Lost Saga in Timegate - Client')
 
     while True:
+
         screen.capture()
-        position = screen.find('close1.png')
-        if position == None:    # [关闭]按钮不存在
-            position = screen.find('reward.png')
-            if position == None:    # [收到奖励]按钮不存在
-                position = screen.find('sell_other.png')
-                if position == None:    # [贩卖其他道具]按钮不存在
-                    position = screen.find('sell_single.png')
-                    if position == None:    # [个别贩卖]按钮不存在
-                        position = screen.find('close2.png')
-                        if position == None:    # [x]按钮不存在
-                            position = screen.find('sell.png')
-                            if position == None:    # [出售钓鱼产品]按钮不存在
-                                position = screen.find('fish.png')
-                            else:
-                                item = screen.find('empty_item.png')
-                                if item != None:    # 物品为空
-                                    position = screen.find('start.png')
-                                    if position == None:    # [钓鱼]按钮不存在
-                                        print('无可贩卖物品, 等待 10 秒...')
-                                        time.sleep(10)
-                                        continue
-        
-        if position == None:
-            ghub = Mouse()
-            ghub.move(0, 0)
-            time.sleep(3)
-        x, y = int(position['result'][0]), int(position['result'][1])
-        print(f'点击坐标: ({x}, {y})')
+        if screen.find('assets/close1.png'): # [关闭(ESC)] 按钮存在
+            pass
+        elif screen.find('assets/close2.png'): # [关闭(SPACE)] 按钮存在
+            pass
+        elif screen.find('assets/reward.png'): # [收到奖励] 按钮存在
+            pass
+        elif screen.find('assets/sell_other.png'): # [贩卖其他道具] 按钮存在
+            pass
+        elif screen.find('assets/sell_single.png'): # [个别贩卖] 按钮存在
+            pass
+        elif screen.find('assets/close3.png'): # [×] 按钮存在
+            pass
+        elif screen.find('assets/sell.png'): # [出售钓鱼产品] 按钮存在
+            position = screen.position
+            if screen.find('assets/empty_item.png'): # 物品栏为空
+                if screen.find('assets/start.png'): # [钓鱼] 按钮存在
+                    pass
+                else: # 正在钓鱼 -> 等待
+                    print(f'{strftime("%H:%M:%S", localtime())} 物品栏为空, 等待 [10] 秒...')
+                    sleep(10)
+                    continue
+            else: # 物品栏不为空
+                screen.position = position
+        elif screen.find('assets/fish.png'): # [钓鱼] 按钮存在
+            pass
+        else: # []
+            print(f'{strftime("%H:%M:%S", localtime())} 未检测到按钮, [5] 秒后重试')
+            sleep(5)
+            continue
+        screen.click()
 
         # 标出位置
         # screen.pix.save('screen.png')
@@ -113,10 +125,8 @@ if __name__ =='__main__':
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
 
-        screen.click(x, y)
-
-        print('3 秒后执行下一步操作...')
-        time.sleep(3)
+        print(f'{strftime("%H:%M:%S", localtime())} [5] 秒后执行下一步操作...')
+        sleep(5)
 
 
 
