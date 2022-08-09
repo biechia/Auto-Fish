@@ -1,12 +1,11 @@
-from turtle import position
 from PyQt5.QtWidgets import QApplication
-import win32gui, time
+import win32gui, win32com, win32com.client, sys
 import pyautogui as pag
-from ctypes import CDLL
+from ctypes import CDLL, windll
 from numpy import array,uint8,ndarray
 import cv2
 import aircv as ac
-from time import strftime, localtime, time, sleep
+from time import strftime, localtime, sleep
 
 
 class Mouse:
@@ -51,6 +50,13 @@ class Screen:
         return self.img
     def getRect(self):
         return win32gui.GetWindowRect(self._hwnd)
+    def focus(self):
+        if self._hwnd != win32gui.GetForegroundWindow():
+            print(f'{strftime("%H:%M:%S", localtime())} 切换到游戏窗口')
+            shell = win32com.client.Dispatch("WScript.Shell")
+            shell.SendKeys('%')
+            win32gui.SetForegroundWindow(self._hwnd)
+            sleep(0.1)
     def find(self, templateSrc):
         template = cv2.imread(templateSrc)
         match_result = ac.find_template(self.img, template)
@@ -62,6 +68,9 @@ class Screen:
             self.position = int(match_result['result'][0]), int(match_result['result'][1])
             return True
     def click(self, x=-1, y=-1):
+        if self.position == None:
+            print(f'{strftime("%H:%M:%S", localtime())} 未找到点击坐标')
+            return
         if x == -1 or y == -1:
             x = self.position[0]
             y = self.position[1]
@@ -71,11 +80,10 @@ class Screen:
         self.mouse.move(x, y)
         self.mouse.click()
         print(f'{strftime("%H:%M:%S", localtime())} 点击坐标: ({x}, {y})')
-        
 
 
-if __name__ =='__main__':
 
+def main():
     print(f'{strftime("%H:%M:%S", localtime())} [5] 秒后开始执行, 请切换到游戏窗口')
     sleep(5)
     print(f'{strftime("%H:%M:%S", localtime())} 开始操作')
@@ -114,6 +122,7 @@ if __name__ =='__main__':
             print(f'{strftime("%H:%M:%S", localtime())} 未检测到按钮, [5] 秒后重试')
             sleep(5)
             continue
+        screen.focus()
         screen.click()
 
         # 标出位置
@@ -128,6 +137,19 @@ if __name__ =='__main__':
         print(f'{strftime("%H:%M:%S", localtime())} [5] 秒后执行下一步操作...')
         sleep(5)
 
+
+
+if __name__ =='__main__':
+
+    # if not windll.shell32.IsUserAnAdmin():
+    #     windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    #     exit()
+    
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        input('回车关闭程序......')
 
 
 
