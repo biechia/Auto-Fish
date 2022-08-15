@@ -1,13 +1,12 @@
 from PyQt5.QtWidgets import QApplication
 import win32gui, win32com, win32com.client, sys
 import pyautogui as pag
-from ctypes import CDLL, windll
+from ctypes import CDLL
 from numpy import array, uint8, ndarray
 import cv2
 import aircv as ac
 from time import strftime, localtime, sleep
 from cnocr import CnOcr
-
 
 
 class Ghub:
@@ -20,14 +19,21 @@ class Ghub:
         x -= cursor.x
         y -= cursor.y
         self.ghub.moveR(x, y)
-    def click(self):
+    def click(self, delay=0.1):
         self.ghub.mouse_down(1)
-        sleep(0.1)
+        sleep(delay)
         self.ghub.mouse_up(1)
-    def key(self, keyCode: str):
+        sleep(delay)
+    def key_down(self, keyCode: str):
         self.ghub.key_down(keyCode.encode('utf-8'))
-        sleep(0.1)
+    def key_up(self, keyCode: str):
         self.ghub.key_up(keyCode.encode('utf-8'))
+    def key(self, keyCode: str, delay=0.1):
+        self.key_down(keyCode)
+        sleep(delay)
+        self.key_up(keyCode)
+        sleep(delay)
+
 
 class Screen:
     def __init__(self,win_title=None,win_class=None,hwnd=None) -> None:
@@ -83,9 +89,13 @@ class Screen:
         rect = self.getRect()
         x += rect[0]
         y += rect[1] + 26
+        self.focus()
         self.ghub.move(x, y)
         self.ghub.click()
         print(f'{strftime("%H:%M:%S", localtime())} 点击坐标: ({x}, {y})')
+    def key(self, keyCode):
+        self.focus()
+        self.ghub.key(keyCode)
 
 def sellAuto():
     print(f'{strftime("%H:%M:%S", localtime())} 请把背包翻到第一页, [5] 秒后开始执行程序...')
@@ -113,10 +123,8 @@ def sellAuto():
             num1, num2 = text.split('+')
             result = str(int(num1) + int(num2))
             print(f'{strftime("%H:%M:%S", localtime())} 计算结果为 [{result}]')
-            screen.focus()
             for i in result:
-                screen.ghub.key(i)
-                sleep(0.1)
+                screen.key(i)
             screen.ghub.key('enter')
             print(f'{strftime("%H:%M:%S", localtime())} 已输入计算结果, 等待 [60] 秒...')
             sleep(60)
@@ -127,6 +135,8 @@ def sellAuto():
             continue
         elif screen.find('sell_auto.png'): # [自动贩卖] 按钮存在
             pass
+        elif screen.find('friend_ask.png'): # 好友申请窗口存在
+            screen.find('friend_accept.png')
         elif screen.find('close3.png'): # [×] 按钮存在
             pass
         elif screen.find('sell.png'): # [出售钓鱼产品] 按钮存在
@@ -146,7 +156,6 @@ def sellAuto():
             print(f'{strftime("%H:%M:%S", localtime())} 未检测到按钮, [5] 秒后重试')
             sleep(5)
             continue
-        screen.focus()
         screen.click()
         
         # # 标出位置
@@ -181,6 +190,8 @@ def sellSingle():
             pass
         elif screen.find('sell_single.png'): # [个别贩卖] 按钮存在
             pass
+        elif screen.find('friend_ask.png'): # 好友申请窗口存在
+            screen.find('friend_accept.png')
         elif screen.find('close3.png'): # [×] 按钮存在
             pass
         elif screen.find('sell.png'): # [出售钓鱼产品] 按钮存在
@@ -200,7 +211,6 @@ def sellSingle():
             print(f'{strftime("%H:%M:%S", localtime())} 未检测到按钮, [5] 秒后重试')
             sleep(5)
             continue
-        screen.focus()
         screen.click()
 
         # 标出位置
